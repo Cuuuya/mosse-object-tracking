@@ -15,11 +15,14 @@ python demo.py
 ### Step2
 Use mouse to select the object which needs to be tracked and Press **Enter** to start tracking.
 
-## Demo
-![demo](https://github.com/TianhongDai/MOSSE_Object_Tracking/blob/master/examples/surfer.gif)
-
 ## Time measurement
 The average time per frame: 0.0376109304 s
+
+## Saved gif
+![gif](https://github.com/Cuuuya/mosse-object-tracking/blob/master/test.gif?raw=true)
+
+## Demo
+![demo](https://github.com/TianhongDai/MOSSE_Object_Tracking/blob/master/examples/surfer.gif)
 
 ## Reference:
 [1] [Visual object tracking using adaptive correlation filters](https://ieeexplore.ieee.org/document/5539960/)
