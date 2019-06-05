@@ -18,5 +18,8 @@ Use mouse to select the object which needs to be tracked and Press **Enter** to 
 ## Demo
 ![demo](https://github.com/TianhongDai/MOSSE_Object_Tracking/blob/master/examples/surfer.gif)
 
+## Time measurement
+The average time per frame: 0.0376109304 s
+
 ## Reference:
 [1] [Visual object tracking using adaptive correlation filters](https://ieeexplore.ieee.org/document/5539960/)
