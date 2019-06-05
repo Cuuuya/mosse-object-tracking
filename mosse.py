@@ -26,7 +26,7 @@ class mosse:
         init_frame = cv2.cvtColor(init_img, cv2.COLOR_BGR2GRAY)
         init_frame = init_frame.astype(np.float32)
         # get the init ground truth.. [x, y, width, height]
-        init_gt = cv2.selectROI('demo', init_img, False, False)
+        init_gt = cv2.selectROI('demo', init_img, False, False) # return a tuple(x,y,w,h)
         init_gt = np.array(init_gt).astype(np.int64)
         # start to draw the gaussian response...
         response_map = self._get_gauss_response(init_frame, init_gt)
@@ -38,15 +38,20 @@ class mosse:
         # start to do the pre-training...
         Ai, Bi = self._pre_training(fi, G)
         # start the tracking...
+
+        time_list = []
         for idx in range(len(self.frame_lists)):
+
+            e1 = cv2.getTickCount()
+
             current_frame = cv2.imread(self.frame_lists[idx])
             frame_gray = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
             frame_gray = frame_gray.astype(np.float32)
             if idx == 0:
                 Ai = self.args.lr * Ai
                 Bi = self.args.lr * Bi
-                pos = init_gt.copy()
-                clip_pos = np.array([pos[0], pos[1], pos[0]+pos[2], pos[1]+pos[3]]).astype(np.int64)
+                pos = init_gt.copy() #[x,y,w,h]
+                clip_pos = np.array([pos[0], pos[1], pos[0]+pos[2], pos[1]+pos[3]]).astype(np.int64) #[x1,y1,x2,y2]
             else:
                 Hi = Ai / Bi
                 fi = frame_gray[clip_pos[1]:clip_pos[3], clip_pos[0]:clip_pos[2]]
@@ -76,11 +81,17 @@ class mosse:
                 # online update...
                 Ai = self.args.lr * (G * np.conjugate(np.fft.fft2(fi))) + (1 - self.args.lr) * Ai
                 Bi = self.args.lr * (np.fft.fft2(fi) * np.conjugate(np.fft.fft2(fi))) + (1 - self.args.lr) * Bi
-            
+
+                # measure time
+                e2 = cv2.getTickCount()
+                time = (e2 - e1) / cv2.getTickFrequency()
+                time_list.append(time)
+
             # visualize the tracking process...
             cv2.rectangle(current_frame, (pos[0], pos[1]), (pos[0]+pos[2], pos[1]+pos[3]), (255, 0, 0), 2)
             cv2.imshow('demo', current_frame)
             cv2.waitKey(100)
+
             # if record... save the frames..
             if self.args.record:
                 frame_path = 'record_frames/' + self.img_path.split('/')[1] + '/'
@@ -88,9 +99,12 @@ class mosse:
                     os.mkdir(frame_path)
                 cv2.imwrite(frame_path + str(idx).zfill(5) + '.png', current_frame)
 
+        print(time_list)
+        print(np.mean(time_list))
+
 
     # pre train the filter on the first frame...
-    def _pre_training(self, init_frame, G):
+    def _pre_training(self, init_frame, G): # input(fi, G)
         height, width = G.shape
         fi = cv2.resize(init_frame, (width, height))
         # pre-process img..
@@ -107,8 +121,8 @@ class mosse:
         
         return Ai, Bi
 
-    # get the ground-truth gaussian reponse...
-    def _get_gauss_response(self, img, gt):
+    # get the ground-truth gaussian reponse...  # get g
+    def _get_gauss_response(self, img, gt):  # img: img_frame_original size, gt:SelectROI array [x,y,w,h]
         # get the shape of the image..
         height, width = img.shape
         # get the mesh grid...
@@ -121,7 +135,7 @@ class mosse:
         # get the response map...
         response = np.exp(-dist)
         # normalize...
-        response = linear_mapping(response)
+        response = linear_mapping(response)   # return a number
         return response
 
     # it will extract the image list 
